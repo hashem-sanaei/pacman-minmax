@@ -20,7 +20,14 @@ class Gameboard:
     def display(self):
         for row in self.board:
             print(' '.join(row))
+        # چاپ موقعیت پک‌من و روح‌ها
+        print(f'Pacman: {self.pacman.position}')
+        for i, ghost in enumerate(self.ghosts):
+            print(f'Ghost {i}: {ghost.position}')
+
         print()
+        
+
 
     def is_game_over(self):
         # بررسی برخورد پک‌من با روح‌ها
@@ -38,12 +45,12 @@ class Gameboard:
 
     def is_near_high_density_area(self, x, y):
         count = 0
-        for dx in range(-2, 3):  # بررسی در یک محدوده 5x5 اطراف پک‌من
-            for dy in range(-2, 3):
+        for dx in range(-3, 2):  # بررسی در یک محدوده 5x5 اطراف پک‌من
+            for dy in range(-3, 2):
                 nx, ny = x + dx, y + dy
                 if 0 <= nx < self.height and 0 <= ny < self.width and self.board[nx][ny] == '.':
                     count += 1
-        return count >= 10  # مثلاً اگر بیش از 10 نقطه در این محدوده باشد
+        return count >= 7  # مثلاً اگر بیش از 10 نقطه در این محدوده باشد
 
     def is_escape_route_available(self, x, y):
         for dx in range(-1, 2):  # بررسی در محدوده مجاور پک‌من
@@ -60,12 +67,12 @@ class Gameboard:
     def evaluate(self):
         score = 0
         # افزودن امتیاز برای هر نقطه‌ای که پک‌من می‌خورد
-        score += sum(1 for x in range(self.height) for y in range(self.width) if self.board[x][y] == '.')
+        score += sum(10 for x in range(self.height) for y in range(self.width) if self.board[x][y] == '#')
 
         # کسر امتیاز برای نزدیکی به روح‌ها
         for ghost in self.ghosts:
             distance = abs(ghost.position[0] - self.pacman.position[0]) + abs(ghost.position[1] - self.pacman.position[1])
-            score -= max(0, 10 - distance)  # برای مثال، فاصله کمتر از 10 خانه امتیاز منفی دارد
+            score += distance 
 
         # کاهش امتیاز بر اساس تعداد حرکات
         score -= self.pacman.moves_count
@@ -73,14 +80,20 @@ class Gameboard:
         # اضافه کردن امتیاز برای قرار گرفتن در موقعیت‌های استراتژیک
         strategic_positions_score = 0
         x, y = self.pacman.position
-        # مثلاً اگر پک‌من در نزدیکی یک منطقه با تعداد زیادی نقطه قرار دارد
         if self.is_near_high_density_area(x, y):
-            strategic_positions_score += 5
-        # اگر مسیر فرار از روح‌ها وجود دارد
-        if self.is_escape_route_available(x, y):
             strategic_positions_score += 10
-
+        else:
+            for x in range(self.height):
+                for y in range(self.width):
+                    if self.board[x][y] == '.':
+                        distance = abs(x - self.pacman.position[0]) + abs(y - self.pacman.position[1])
+                        score -= distance
+        if self.is_escape_route_available(x, y):
+            strategic_positions_score +=15
+        
         score += strategic_positions_score
+        
+
 
         return score
 

@@ -1,6 +1,6 @@
 from Gameboard import*
 from Pacman_ghavi import*
-from Ghost import*
+from Ghost import *
 
 from Gameboard import Gameboard
 
@@ -10,17 +10,23 @@ def minimax(board, depth, isMaximizing):
             return board.evaluate()
 
         if isMaximizing:
-            maxEval = float('-inf')
-            for child in board.get_children():
-                eval = minimax(child, depth - 1, False)
-                maxEval = max(maxEval, eval)
-            return maxEval
+            best_score = float('-inf')
+            for direction in ["up", "down", "left", "right"]:
+                new_board = copy.deepcopy(board)
+                new_board.pacman.move(direction)
+                score = minimax(new_board, depth - 1, False)
+                best_score = max(best_score, score)
+            return best_score
         else:
-            minEval = float('inf')
-            for child in board.get_children():
-                eval = minimax(child, depth - 1, True)
-                minEval = min(minEval, eval)
-            return minEval
+            best_score = float('inf')
+            for direction in ["up", "down", "left", "right"]:
+                for direction2 in ["up", "down", "left", "right"]:
+                    new_board = copy.deepcopy(board)
+                    new_board.ghosts[0].move(direction)
+                    new_board.ghosts[1].move(direction2)
+                    score = minimax(new_board, depth - 1, True)
+                    best_score = min(best_score, score)
+            return best_score
 
 
 def run_game():
@@ -31,17 +37,16 @@ def run_game():
 
     while not board.is_game_over():
         board.display()
-
         best_move = None
         best_score = float('-inf')
         for direction in ["up", "down", "left", "right"]:
             new_board = copy.deepcopy(board)
             new_board.pacman.move(direction)
-            score = minimax(new_board, 3, False)
+            score = minimax(new_board, 2, False)
             if score > best_score:
                 best_score = score
                 best_move = direction
-
+        print(best_move)
         if best_move:
             pacman.move(best_move)
 

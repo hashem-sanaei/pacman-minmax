@@ -4,20 +4,19 @@ class Ghost:
         self.board = board
         self.position = (8, 8)  # تعیین موقعیت اولیه روح
 
-    def move(self):
+    def move(self, direction=None):
         directions = ["up", "down", "left", "right"]
-        while True:
+        if direction is None:
             direction = random.choice(directions)
-            x, y = self.position
-            if direction == "up":
-                x -= 1
-            elif direction == "down":
-                x += 1
-            elif direction == "left":
-                y -= 1
-            elif direction == "right":
-                y += 1
+        x, y = self.position
+        if direction == "up":
+            x -= 1
+        elif direction == "down":
+            x += 1
+        elif direction == "left":
+            y -= 1
+        elif direction == "right":
+            y += 1
 
-            if 0 <= x < self.board.height and 0 <= y < self.board.width and self.board.board[x][y] != 'X':
-                self.position = (x, y)
-                break  
+        if 0 <= x < self.board.height and 0 <= y < self.board.width and self.board.board[x][y] != 'X':
+            self.position = (x, y)  

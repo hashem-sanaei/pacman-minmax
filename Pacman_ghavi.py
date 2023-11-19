@@ -19,6 +19,8 @@ class Pacman_ghavi:
         elif direction == "right":
             y += 1
         if 0 <= x < self.board.height and 0 <= y < self.board.width and self.board.board[x][y] != 'X':
+            if self.moves_count == 0:
+                self.board.board[x][y] = '#'
             self.position = (x, y)
             self.board.board[x][y]='#'
             self.moves_count += 1  # افزایش تعداد حرکات
