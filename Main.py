@@ -1,10 +1,7 @@
 from Gameboard import*
 from Pacman_ghavi import*
 from Ghost import *
-
 from Gameboard import Gameboard
-
-
 import copy
 
 def minimax(board, depth, isMaximizing, alpha, beta):
@@ -50,7 +47,7 @@ def run_game():
         for direction in ["up", "down", "left", "right"]:
             new_board = copy.deepcopy(board)
             new_board.pacman.move(direction)
-            score = minimax(new_board, 2, False, float('-inf'), float('inf'))
+            score = minimax(new_board, 4, False, float('-inf'), float('inf'))
             if score > best_score:
                 best_score = score
                 best_move = direction
