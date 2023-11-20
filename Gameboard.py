@@ -64,34 +64,36 @@ class Gameboard:
                         return True
         return False
 
+    def bfs_to_foods(self):
+        x, y = self.pacman.position
+        queue = [(x, y, 0)]
+        visited = set()
+        while queue:
+            x, y, distance = queue.pop(0)
+            if self.board[x][y] == '.':
+                return distance
+            visited.add((x, y))
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < self.height and 0 <= ny < self.width and (nx, ny) not in visited and self.board[nx][ny] != 'X':
+                    queue.append((nx, ny, distance + 1))
+        return float('inf')
+
     def evaluate(self):
-        score = 0
+        score = 10 * sum(10 for x in range(self.height) for y in range(self.width) if self.board[x][y] == '#')
+        if self.is_game_over():
+            for ghost in self.ghosts:
+                if ghost.position == self.pacman.position:
+                    return float('-inf')
+            return 1000 * score
         # افزودن امتیاز برای هر نقطه‌ای که پک‌من می‌خورد
-        score += sum(10 for x in range(self.height) for y in range(self.width) if self.board[x][y] == '#')
 
         # کسر امتیاز برای نزدیکی به روح‌ها
         for ghost in self.ghosts:
             distance = abs(ghost.position[0] - self.pacman.position[0]) + abs(ghost.position[1] - self.pacman.position[1])
-            score += distance 
+            score += 2 * distance 
 
-        # کاهش امتیاز بر اساس تعداد حرکات
-        score -= self.pacman.moves_count
-
-        # اضافه کردن امتیاز برای قرار گرفتن در موقعیت‌های استراتژیک
-        strategic_positions_score = 0
-        x, y = self.pacman.position
-        if self.is_near_high_density_area(x, y):
-            strategic_positions_score += 10
-        else:
-            for x in range(self.height):
-                for y in range(self.width):
-                    if self.board[x][y] == '.':
-                        distance = abs(x - self.pacman.position[0]) + abs(y - self.pacman.position[1])
-                        score -= distance
-        if self.is_escape_route_available(x, y):
-            strategic_positions_score +=15
-        
-        score += strategic_positions_score
+        score -= 10 * self.bfs_to_foods()
         
 
 
