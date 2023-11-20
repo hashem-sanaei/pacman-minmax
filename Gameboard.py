@@ -8,8 +8,8 @@ class Gameboard:
         self.height = height
         self.board = [['.' for _ in range(width)] for _ in range(height)]
         self.set_obstacles()
-        self.pacman = None  # این باید بعداً مقداردهی شود
-        self.ghosts = []  # این باید بعداً مقداردهی شود
+        self.pacman = None  
+        self.ghosts = []  
 
     def set_obstacles(self):
         obstacle_count = self.width * self.height // 10
@@ -43,41 +43,43 @@ class Gameboard:
         self.pacman = pacman
         self.ghosts = ghosts
 
-    def is_near_high_density_area(self, x, y):
-        count = 0
-        for dx in range(-3, 2):  # بررسی در یک محدوده 5x5 اطراف پک‌من
-            for dy in range(-3, 2):
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < self.height and 0 <= ny < self.width and self.board[nx][ny] == '.':
-                    count += 1
-        return count >= 7  # مثلاً اگر بیش از 10 نقطه در این محدوده باشد
 
-    def is_escape_route_available(self, x, y):
-        for dx in range(-1, 2):  # بررسی در محدوده مجاور پک‌من
-            for dy in range(-1, 2):
-                if dx == 0 and dy == 0:
-                    continue  # خود خانه پک‌من را نادیده می‌گیریم
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < self.height and 0 <= ny < self.width and self.board[nx][ny] != 'X':
-                    # اگر خانه‌ای بدون مانع و دور از روح‌ها باشد
-                    if not any(abs(ghost.position[0] - nx) + abs(ghost.position[1] - ny) < 2 for ghost in self.ghosts):
-                        return True
-        return False
-
-    def bfs_to_foods(self):
+    def a_star_to_foods(self):
         x, y = self.pacman.position
-        queue = [(x, y, 0)]
-        visited = set()
-        while queue:
-            x, y, distance = queue.pop(0)
-            if self.board[x][y] == '.':
-                return distance
-            visited.add((x, y))
+        start_node = (x, y, 0)  # (x, y, g_cost)
+        open_set = {start_node}
+        came_from = {}  # to track the path
+        g_score = {start_node: 0}
+        f_score = {start_node: self.manhattan_distance(x, y)}
+
+        while open_set:
+            current = min(open_set, key=lambda o: f_score.get(o, float('inf')))
+            if self.board[current[0]][current[1]] == '.':
+                return g_score[current]
+            
+            open_set.remove(current)
+            
             for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < self.height and 0 <= ny < self.width and (nx, ny) not in visited and self.board[nx][ny] != 'X':
-                    queue.append((nx, ny, distance + 1))
+                neighbor = (current[0] + dx, current[1] + dy, g_score[current] + 1)
+                if 0 <= neighbor[0] < self.height and 0 <= neighbor[1] < self.width and self.board[neighbor[0]][neighbor[1]] != 'X':
+                    if neighbor not in g_score or neighbor[2] < g_score[neighbor]:
+                        came_from[neighbor] = current
+                        g_score[neighbor] = neighbor[2]
+                        f_score[neighbor] = g_score[neighbor] + self.manhattan_distance(neighbor[0], neighbor[1])
+                        if neighbor not in open_set:
+                            open_set.add(neighbor)
+
         return float('inf')
+
+    def manhattan_distance(self, x, y):
+        # Heuristic function: Manhattan distance to the nearest food
+        min_distance = float('inf')
+        for i in range(self.height):
+            for j in range(self.width):
+                if self.board[i][j] == '.':
+                    min_distance = min(min_distance, abs(x - i) + abs(y - j))
+        return min_distance
+
 
     def evaluate(self):
         score = 10 * sum(10 for x in range(self.height) for y in range(self.width) if self.board[x][y] == '#')
@@ -86,14 +88,13 @@ class Gameboard:
                 if ghost.position == self.pacman.position:
                     return float('-inf')
             return 1000 * score
-        # افزودن امتیاز برای هر نقطه‌ای که پک‌من می‌خورد
-
+        
         # کسر امتیاز برای نزدیکی به روح‌ها
         for ghost in self.ghosts:
             distance = abs(ghost.position[0] - self.pacman.position[0]) + abs(ghost.position[1] - self.pacman.position[1])
             score += 2 * distance 
 
-        score -= 10 * self.bfs_to_foods()
+        score -= 10 * self.a_star_to_foods()
         
 
 
